@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Precompiled">
+      <UniqueIdentifier>{09eca04e-802f-4f17-bbbf-b956f4922be9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Exception Handling">
+      <UniqueIdentifier>{5ff43b5f-f3d2-43fa-aac3-165144b5a0d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Exception Handling\Src">
+      <UniqueIdentifier>{f862ac3b-ea6d-4530-b13b-1ee6a343645c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Exception Handling\Headers">
+      <UniqueIdentifier>{49959f17-d481-4e56-bc11-6e19f7a0f0a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Structs">
+      <UniqueIdentifier>{0d3c42be-1a2b-4a11-9966-f25fae71f2ac}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Precompiled</Filter>
+    </ClCompile>
+    <ClCompile Include="Parse.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="ErrorFormatting.cpp">
+      <Filter>Exception Handling\Src</Filter>
+    </ClCompile>
+    <ClCompile Include="ExceptionHandler.cpp">
+      <Filter>Exception Handling\Src</Filter>
+    </ClCompile>
+    <ClCompile Include="ConsoleUI.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Precompiled</Filter>
+    </ClInclude>
+    <ClInclude Include="Parse.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ExceptionCodes.h">
+      <Filter>Exception Handling\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ExceptionHandler.h">
+      <Filter>Exception Handling\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ErrorFormatting.h">
+      <Filter>Exception Handling\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConsoleUI.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Request.h">
+      <Filter>Structs</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
