@@ -3,8 +3,11 @@ PE-Parser:
 
 Commands:
 - /DosHdr
+  - Supports -resolve argument.
 - /FileHdr
+  - Supports -resolve argument.
 - /OptHdr
+  - Supports -resolve argument.
 - /Sections
 - /Imports
 - /Exports
