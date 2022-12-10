@@ -729,27 +729,27 @@ DWORD ConvertToFileOffset(const void* pMappedFile, DWORD RelativeVirtualAddress,
 
 //Memory leak issues should be fixed...
 #define INDENT_AMOUNT 6
-TCHAR* ParseImports(void* pMappedFile, Request* pCurrentRequest, WORD Architecture)
+TCHAR* ParseImports(void* pMappedFile, Request* pCurrentRequest, WORD dwArchitecture)
 {
 	const	IMAGE_DOS_HEADER* DosHeader = reinterpret_cast<const IMAGE_DOS_HEADER*>(pMappedFile);
 	const	IMAGE_IMPORT_DESCRIPTOR* Imports = nullptr;
 
 
 
-	switch (Architecture)
+	switch (dwArchitecture)
 	{
 
 	case IMAGE_FILE_MACHINE_AMD64:
 	{
 		const IMAGE_NT_HEADERS64* NtHeader = reinterpret_cast<const IMAGE_NT_HEADERS64*>(reinterpret_cast<const BYTE*>(pMappedFile) + DosHeader->e_lfanew);
-		Imports = reinterpret_cast<const IMAGE_IMPORT_DESCRIPTOR*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress, Architecture));
+		Imports = reinterpret_cast<const IMAGE_IMPORT_DESCRIPTOR*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress, dwArchitecture));
 		break;
 	}
 
 	case IMAGE_FILE_MACHINE_I386:
 	{
 		const IMAGE_NT_HEADERS32* NtHeader = reinterpret_cast<const IMAGE_NT_HEADERS32*>(reinterpret_cast<const BYTE*>(pMappedFile) + DosHeader->e_lfanew);
-		Imports = reinterpret_cast<const IMAGE_IMPORT_DESCRIPTOR*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress, Architecture));
+		Imports = reinterpret_cast<const IMAGE_IMPORT_DESCRIPTOR*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress, dwArchitecture));
 		break;
 	}
 
@@ -765,7 +765,7 @@ TCHAR* ParseImports(void* pMappedFile, Request* pCurrentRequest, WORD Architectu
 	char* FormattedImports = nullptr;
 	for (const IMAGE_IMPORT_DESCRIPTOR* ImportsLoop = Imports; ImportsLoop->Characteristics != NULL; ImportsLoop++)
 	{
-		const char* CurrentModule = reinterpret_cast<const char*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, ImportsLoop->Name, Architecture));
+		const char* CurrentModule = reinterpret_cast<const char*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, ImportsLoop->Name, dwArchitecture));
 		if (FormattedImports == nullptr)
 		{
 			size_t FormattedImportsSize = strlen(CurrentModule) + 1;
@@ -803,12 +803,12 @@ TCHAR* ParseImports(void* pMappedFile, Request* pCurrentRequest, WORD Architectu
 
 
 		char* FormattedFunctionNames = nullptr;
-		switch (Architecture)
+		switch (dwArchitecture)
 		{
 
 		case IMAGE_FILE_MACHINE_AMD64:
 		{
-			const uint64_t* ImageLookupTable = reinterpret_cast<const uint64_t*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, ImportsLoop->OriginalFirstThunk, Architecture));
+			const uint64_t* ImageLookupTable = reinterpret_cast<const uint64_t*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, ImportsLoop->OriginalFirstThunk, dwArchitecture));
 			for (; *ImageLookupTable != NULL; ImageLookupTable++)
 			{
 				if (*ImageLookupTable & 0x8000000000000000)
@@ -818,7 +818,7 @@ TCHAR* ParseImports(void* pMappedFile, Request* pCurrentRequest, WORD Architectu
 				else
 				{
 					DWORD NameRelativeOffset = *ImageLookupTable;
-					const _IMAGE_IMPORT_BY_NAME* NameTable = reinterpret_cast<const _IMAGE_IMPORT_BY_NAME*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, NameRelativeOffset, Architecture));
+					const _IMAGE_IMPORT_BY_NAME* NameTable = reinterpret_cast<const _IMAGE_IMPORT_BY_NAME*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, NameRelativeOffset, dwArchitecture));
 
 					if (FormattedFunctionNames == nullptr)
 					{
@@ -891,12 +891,96 @@ TCHAR* ParseImports(void* pMappedFile, Request* pCurrentRequest, WORD Architectu
 			}
 		
 			FormattedImports = ResizedFormattedImports;
+			break;
 		}
 
 
 		case IMAGE_FILE_MACHINE_I386:
 		{
+			const uint32_t* ImageLookupTable = reinterpret_cast<const uint32_t*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, ImportsLoop->OriginalFirstThunk, dwArchitecture));
+			for (; *ImageLookupTable != NULL; ImageLookupTable++)
+			{
+				if (*ImageLookupTable & 0x80000000)
+				{
+					//Oridinal...
+				}
+				else
+				{
+					DWORD NameRelativeOffset = *ImageLookupTable;
+					const _IMAGE_IMPORT_BY_NAME* NameTable = reinterpret_cast<const _IMAGE_IMPORT_BY_NAME*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, NameRelativeOffset, dwArchitecture));
 
+					if (FormattedFunctionNames == nullptr)
+					{
+						size_t FormattedFunctionNamesSize = strlen(NameTable->Name) + INDENT_AMOUNT + 1;
+						FormattedFunctionNames = new char[FormattedFunctionNamesSize] {};
+						if (FormattedFunctionNames == nullptr)
+						{
+							if (FormattedImports)
+							{
+								delete[] FormattedImports;
+							}
+							RaiseException(QUERI_EXCEPTION_MEMORY_ALLOC_FAILED, EXCEPTION_NONCONTINUABLE, NULL, nullptr);
+						}
+						strcpy_s(FormattedFunctionNames, FormattedFunctionNamesSize, "      ");
+						strcat_s(FormattedFunctionNames, FormattedFunctionNamesSize, NameTable->Name);
+					}
+					else
+					{
+						size_t ResizedFunctionNamesSize = strlen(FormattedFunctionNames) + strlen(NameTable->Name) + INDENT_AMOUNT + 2;
+						char* ResizedFunctionNames = new char[ResizedFunctionNamesSize] {};
+						if (ResizedFunctionNames == nullptr)
+						{
+							if (FormattedImports)
+							{
+								delete[] FormattedImports;
+							}
+							if (FormattedFunctionNames)
+							{
+								delete[] FormattedFunctionNames;
+							}
+							RaiseException(QUERI_EXCEPTION_MEMORY_ALLOC_FAILED, EXCEPTION_NONCONTINUABLE, NULL, nullptr);
+						}
+						strcpy_s(ResizedFunctionNames, ResizedFunctionNamesSize, FormattedFunctionNames);
+						strcat_s(ResizedFunctionNames, ResizedFunctionNamesSize, "\n");
+						strcat_s(ResizedFunctionNames, ResizedFunctionNamesSize, "      ");
+						strcat_s(ResizedFunctionNames, ResizedFunctionNamesSize, NameTable->Name);
+						if (FormattedFunctionNames)
+						{
+							delete[] FormattedFunctionNames;
+						}
+						FormattedFunctionNames = ResizedFunctionNames;
+					}
+				}
+			}
+
+			char* ResizedFormattedImports = nullptr;
+			__try
+			{
+				size_t FormattedImportsResizedSize = strlen(FormattedImports) + strlen(FormattedFunctionNames) + 3;
+				ResizedFormattedImports = new char[FormattedImportsResizedSize];
+				if (ResizedFormattedImports == nullptr)
+				{
+					RaiseException(QUERI_EXCEPTION_MEMORY_ALLOC_FAILED, EXCEPTION_NONCONTINUABLE, NULL, nullptr);
+				}
+				strcpy_s(ResizedFormattedImports, FormattedImportsResizedSize, FormattedImports);
+				strcat_s(ResizedFormattedImports, FormattedImportsResizedSize, "\n");
+				strcat_s(ResizedFormattedImports, FormattedImportsResizedSize, FormattedFunctionNames);
+				strcat_s(ResizedFormattedImports, FormattedImportsResizedSize, "\n");
+			}
+			__finally
+			{
+				if (FormattedImports)
+				{
+					delete[] FormattedImports;
+				}
+				if (FormattedFunctionNames)
+				{
+					delete[] FormattedFunctionNames;
+				}
+			}
+
+			FormattedImports = ResizedFormattedImports;
+			break;
 		}
 
 		}
@@ -904,14 +988,122 @@ TCHAR* ParseImports(void* pMappedFile, Request* pCurrentRequest, WORD Architectu
 	}
 
 #ifdef UNICODE
-	size_t WideSize = MultiByteToWideChar(CP_UTF8, NULL, FormattedImports, -1, nullptr, NULL);
-	WCHAR* WideVariant = new WCHAR[WideSize]{};
-	MultiByteToWideChar(CP_UTF8, NULL, FormattedImports, -1, WideVariant, WideSize);
+	size_t WideImportsSize = MultiByteToWideChar(CP_UTF8, NULL, FormattedImports, -1, nullptr, NULL);
+	if (!WideImportsSize)
+	{
+		return nullptr;
+	}
+	WCHAR* WideImports = new WCHAR[WideImportsSize]{};
+	if (WideImports == nullptr)
+	{
+		RaiseException(QUERI_EXCEPTION_MEMORY_ALLOC_FAILED, EXCEPTION_NONCONTINUABLE, NULL, nullptr);
+	}
+	MultiByteToWideChar(CP_UTF8, NULL, FormattedImports, -1, WideImports, WideImportsSize);
 	if (FormattedImports)
 	{
 		delete[] FormattedImports;
 	}
-	return WideVariant;
+	return WideImports;
+#else
+	return FormattedImports;
+#endif
+}
+
+
+
+TCHAR* ParseExports(const void* pMappedFile, Request* pCurrentRequest, DWORD dwArchitecture)
+{
+	const	IMAGE_DOS_HEADER* DosHeader = reinterpret_cast<const IMAGE_DOS_HEADER*>(pMappedFile);
+	const	IMAGE_EXPORT_DIRECTORY* Exports = nullptr;
+
+
+
+	switch (dwArchitecture)
+	{
+
+	case IMAGE_FILE_MACHINE_AMD64:
+	{
+		const IMAGE_NT_HEADERS64* NtHeader = reinterpret_cast<const IMAGE_NT_HEADERS64*>(reinterpret_cast<const BYTE*>(pMappedFile) + DosHeader->e_lfanew);
+		Exports = reinterpret_cast<const IMAGE_EXPORT_DIRECTORY*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress, dwArchitecture));
+		break;
+	}
+
+	case IMAGE_FILE_MACHINE_I386:
+	{
+		const IMAGE_NT_HEADERS32* NtHeader = reinterpret_cast<const IMAGE_NT_HEADERS32*>(reinterpret_cast<const BYTE*>(pMappedFile) + DosHeader->e_lfanew);
+		Exports = reinterpret_cast<const IMAGE_EXPORT_DIRECTORY*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress, dwArchitecture));
+		break;
+	}
+
+	default:
+	{
+		RaiseException(QUERI_EXCEPTION_INVALID_ARCHITECTURE, EXCEPTION_NONCONTINUABLE, NULL, nullptr);
+	}
+
+	}
+
+	if (!Exports->AddressOfNames)
+	{
+		return nullptr;
+	}
+
+	char* FormattedExports = nullptr;
+	const DWORD* NameArray = reinterpret_cast<const DWORD*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, Exports->AddressOfNames, dwArchitecture));
+	for (DWORD i = 0; i < Exports->NumberOfNames; i++)
+	{
+		const char* CurName = reinterpret_cast<const char*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, NameArray[i], dwArchitecture));
+
+		if (FormattedExports == nullptr)
+		{
+			FormattedExports = new char[strlen(CurName) + 2]{};
+			if (FormattedExports == nullptr)
+			{
+				RaiseException(QUERI_EXCEPTION_MEMORY_ALLOC_FAILED, EXCEPTION_NONCONTINUABLE, NULL, nullptr);
+			}
+			strcpy_s(FormattedExports, strlen(CurName) + 2, CurName);
+			strcat_s(FormattedExports, strlen(CurName) + 2, "\n");
+		}
+		else
+		{
+			size_t ResizedNameBufferSize = strlen(FormattedExports) + strlen(CurName) + 2;
+			char* ResizedNameBuffer = new char[ResizedNameBufferSize] {};
+			if (ResizedNameBuffer == nullptr)
+			{
+				if (FormattedExports)
+				{
+					delete[] FormattedExports;
+				}
+				RaiseException(QUERI_EXCEPTION_MEMORY_ALLOC_FAILED, EXCEPTION_NONCONTINUABLE, NULL, nullptr);
+			}
+			strcpy_s(ResizedNameBuffer, ResizedNameBufferSize, FormattedExports);
+			strcat_s(ResizedNameBuffer, ResizedNameBufferSize, CurName);
+			strcat_s(ResizedNameBuffer, ResizedNameBufferSize, "\n");
+			if (FormattedExports)
+			{
+				delete[] FormattedExports;
+			}
+			FormattedExports = ResizedNameBuffer;
+		}
+	}
+	
+	
+#ifdef UNICODE
+	size_t WideImportsSize = MultiByteToWideChar(CP_UTF8, NULL, FormattedExports, -1, nullptr, NULL);
+	if (!WideImportsSize)
+	{
+		return nullptr;
+	}
+	WCHAR* WideImports = new WCHAR[WideImportsSize]{};
+	if (WideImports == nullptr)
+	{
+		RaiseException(QUERI_EXCEPTION_MEMORY_ALLOC_FAILED, EXCEPTION_NONCONTINUABLE, NULL, nullptr);
+	}
+	MultiByteToWideChar(CP_UTF8, NULL, FormattedExports, -1, WideImports, WideImportsSize);
+	if (FormattedExports)
+	{
+		delete[] FormattedExports;
+	}
+	return WideImports;
 #else
 	return FormattedImports;
 #endif

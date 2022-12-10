@@ -15,7 +15,6 @@ namespace Instructions
 	constexpr const TCHAR* Sections = TEXT("/Sections");
 	constexpr const TCHAR* Imports = TEXT("/Imports");
 	constexpr const TCHAR* Exports = TEXT("/Exports");
-	constexpr const TCHAR* Save = TEXT("/Save");
 }
 
 static const TCHAR* MenuDisplay =
@@ -29,7 +28,6 @@ TEXT(R"(Mapped File Address: 0x%p  | File Architecture: 0x%X
 /Sections
 /Imports	
 /Exports	
-/Save		[-full, -recent]
 
 )");
 
@@ -172,11 +170,13 @@ void ParseMenu(void* pMappedFile)
 		}
 		else if (!_tcscmp(CurrentRequest.szFunction, Instructions::Exports))
 		{
-
-		}
-		else if (!_tcscmp(CurrentRequest.szFunction, Instructions::Save))
-		{
-
+			TCHAR* Exports = ParseExports(pMappedFile, &CurrentRequest, Architecture);
+			if (Exports)
+			{
+				_tprintf(Exports);
+				_tprintf(TEXT("\n"));
+				delete[] Exports;
+			}
 		}
 		else
 		{
