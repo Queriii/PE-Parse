@@ -742,14 +742,25 @@ TCHAR* ParseImports(void* pMappedFile, Request* pCurrentRequest, WORD dwArchitec
 	case IMAGE_FILE_MACHINE_AMD64:
 	{
 		const IMAGE_NT_HEADERS64* NtHeader = reinterpret_cast<const IMAGE_NT_HEADERS64*>(reinterpret_cast<const BYTE*>(pMappedFile) + DosHeader->e_lfanew);
-		Imports = reinterpret_cast<const IMAGE_IMPORT_DESCRIPTOR*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress, dwArchitecture));
+
+		IMAGE_DATA_DIRECTORY ImageDataDirectory = NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+		if (!ImageDataDirectory.Size)
+		{
+			return nullptr;
+		}
+		Imports = reinterpret_cast<const IMAGE_IMPORT_DESCRIPTOR*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, ImageDataDirectory.VirtualAddress, dwArchitecture));
 		break;
 	}
 
 	case IMAGE_FILE_MACHINE_I386:
 	{
 		const IMAGE_NT_HEADERS32* NtHeader = reinterpret_cast<const IMAGE_NT_HEADERS32*>(reinterpret_cast<const BYTE*>(pMappedFile) + DosHeader->e_lfanew);
-		Imports = reinterpret_cast<const IMAGE_IMPORT_DESCRIPTOR*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress, dwArchitecture));
+		IMAGE_DATA_DIRECTORY ImageDataDirectory = NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+		if (!ImageDataDirectory.Size)
+		{
+			return nullptr;
+		}
+		Imports = reinterpret_cast<const IMAGE_IMPORT_DESCRIPTOR*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, ImageDataDirectory.VirtualAddress, dwArchitecture));
 		break;
 	}
 
@@ -759,7 +770,6 @@ TCHAR* ParseImports(void* pMappedFile, Request* pCurrentRequest, WORD dwArchitec
 	}
 
 	}
-
 
 
 	char* FormattedImports = nullptr;
@@ -1024,14 +1034,24 @@ TCHAR* ParseExports(const void* pMappedFile, Request* pCurrentRequest, DWORD dwA
 	case IMAGE_FILE_MACHINE_AMD64:
 	{
 		const IMAGE_NT_HEADERS64* NtHeader = reinterpret_cast<const IMAGE_NT_HEADERS64*>(reinterpret_cast<const BYTE*>(pMappedFile) + DosHeader->e_lfanew);
-		Exports = reinterpret_cast<const IMAGE_EXPORT_DIRECTORY*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress, dwArchitecture));
+		IMAGE_DATA_DIRECTORY ImageDataDirectory = NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+		if (!ImageDataDirectory.Size)
+		{
+			return nullptr;
+		}
+		Exports = reinterpret_cast<const IMAGE_EXPORT_DIRECTORY*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, ImageDataDirectory.VirtualAddress, dwArchitecture));
 		break;
 	}
 
 	case IMAGE_FILE_MACHINE_I386:
 	{
 		const IMAGE_NT_HEADERS32* NtHeader = reinterpret_cast<const IMAGE_NT_HEADERS32*>(reinterpret_cast<const BYTE*>(pMappedFile) + DosHeader->e_lfanew);
-		Exports = reinterpret_cast<const IMAGE_EXPORT_DIRECTORY*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress, dwArchitecture));
+		IMAGE_DATA_DIRECTORY ImageDataDirectory = NtHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+		if (!ImageDataDirectory.Size)
+		{
+			return nullptr;
+		}
+		Exports = reinterpret_cast<const IMAGE_EXPORT_DIRECTORY*>(reinterpret_cast<const BYTE*>(pMappedFile) + ConvertToFileOffset(pMappedFile, ImageDataDirectory.VirtualAddress, dwArchitecture));
 		break;
 	}
 
