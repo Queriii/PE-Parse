@@ -1,15 +1,13 @@
-PE-Parser:
-- Supports both x86 & x64 PE files.
-
----------------------------------------
-
-Commands:
-- /DosHdr
-  - Supports -resolve argument.
-- /FileHdr
-  - Supports -resolve argument.
-- /OptHdr
-  - Supports -resolve argument.
+#PEParse
+***Functionality***
+- Command line style PE file parser.
+-------------------
+***Commands***
+- /DosHdr [-resolve]
+- /FileHdr [-resolve]
+- /OptHdr [-resolve]
 - /Sections
 - /Imports
 - /Exports
+-----------------
+***Supports both x86 & x64 PE files***
